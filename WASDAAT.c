@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "portsf.h"
+#include <unistd.h> // For access()
 
 
 /*===== main =================================================================*/
@@ -53,13 +54,18 @@ int main(int argc, char *argv[]) {
     scanf("%s", inputFilename);
 
 
-    //todo Check that file exists
+    // Check that file exists
+    if(access(inputFilename, F_OK) != 0){
+        printf("Error: could not find the input file.\n"
+        		"Please check the input filename and re-run the program.\n");
+        return EXIT_FAILURE;
+    }
 
     // Check file format
     psf_format inputFileType = psf_getFormatExt(inputFilename);
     if(inputFileType == PSF_FMT_UNKNOWN) {
         printf("Error: failed to determine the input file type.\n"
-        "Supported formats are .wav, .aif, .aiff, .aifc, .afc, .amb\n");
+        		"Supported formats are .wav, .aif, .aiff, .aifc, .afc, .amb\n");
         return EXIT_FAILURE;
     } else {
         printf("File valid.\n");
@@ -70,4 +76,9 @@ int main(int argc, char *argv[]) {
     // Finish up
     return 0;
 
+}
+
+int cleanUp(){
+
+	return 0;
 }
