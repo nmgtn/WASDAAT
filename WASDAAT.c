@@ -74,11 +74,6 @@ int main(int argc, char *argv[]) {
 
 
     // Finish up
-    return 0;
+    return EXIT_SUCCESS;
 
-}
-
-int cleanUp(){
-
-	return 0;
 }
