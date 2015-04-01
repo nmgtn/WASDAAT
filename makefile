@@ -11,4 +11,5 @@ endif
 
 # In all cases:
 all: WASDAAT.c
-	gcc -Wall -std=gnu99 -o WASDAAT WASDAAT.c -I./include -L./lib $(PORTSFLIB)
+	mkdir -p bin
+	gcc -Wall -std=gnu99 -o bin/WASDAAT WASDAAT.c -I./include -L./lib $(PORTSFLIB)
