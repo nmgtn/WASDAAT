@@ -1,6 +1,8 @@
 language: c
 sudo: required
 install:
+    - mkdir -p lib
+    - mkdir -p include
     - cd portsf
     - make install
 script: make
