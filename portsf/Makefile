@@ -1,12 +1,12 @@
 #
 #	makefile for portsf
 #
-#	
+#
 #	RWD OS X version January 2002
 #
 CC=gcc
 
-CFLAGS=-O2 -Wall -Dunix  -I./.
+CFLAGS=-O2 -Wall -lm -Dunix  -I./.
 
 PSFOBJS=	portsf.o ieee80.o
 
@@ -34,5 +34,3 @@ install:	libportsf.a
 #	dependencies
 #
 portsf.o:	portsf.h ieee80.h
-
-
