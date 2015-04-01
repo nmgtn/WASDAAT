@@ -1,5 +1,10 @@
 language: c
 sudo: required
-before_install: chmod 777 install-dependencies.sh
-install: ./install-dependencies.sh
+before_install:
+    - mkdir -p lib
+    - mkdir -p include
+install:
+    - cd portsf
+    - make install
+    - cd ..
 script: make
