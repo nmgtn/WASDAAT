@@ -1,4 +1,6 @@
 language: c
 sudo: required
-install: ./install-portsf.sh
+install:
+    - cd portsf
+    - make install
 script: make
