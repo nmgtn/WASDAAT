@@ -1,2 +1,0 @@
-cd portsf
-make install

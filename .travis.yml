@@ -1,8 +1,4 @@
 language: c
 sudo: required
-install:
-    - mkdir -p lib
-    - mkdir -p include
-    - cd portsf
-    - make install
+install: ./install-dependecies.sh
 script: make
