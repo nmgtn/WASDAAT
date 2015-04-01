@@ -1,5 +1,5 @@
 language: c
 sudo: required
-before_install: chmod +x install-dependencies.sh
+before_install: chmod 777 install-dependencies.sh
 install: ./install-dependencies.sh
 script: make
