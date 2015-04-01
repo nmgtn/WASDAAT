@@ -1,13 +1,5 @@
-# Detect OS (only works for Mac and Windows (Cygwin 6.3)
-# This hopefully should make life easier for me switching between Andy's Windows install and Will's Mac
-UNAME := $(shell uname)
-
-# Decide which library archive name to use
-ifeq ($(UNAME), CYGWIN_NT-6.3)
-PORTSFLIB = -lportsfWin
-else
-PORTSFLIB = -lportsfMac
-endif
+# portsf library should be installed (one-time) before running make. Use install-portsf.sh
+# Installing portsf first on each system removes the requirement to detect OS and choose an archive file to use in make.
 
 # In all cases:
 all: WASDAAT.c
