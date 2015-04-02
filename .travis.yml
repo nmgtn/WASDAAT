@@ -1,5 +1,5 @@
 language: c
-sudo: required
+sudo: false
 before_install:
     - mkdir -p lib
     - mkdir -p include
