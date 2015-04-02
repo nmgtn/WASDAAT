@@ -4,4 +4,4 @@
 # In all cases:
 all: WASDAAT.c
 	mkdir -p bin
-	gcc -Wall -std=gnu99 WASDAAT.c -o bin/WASDAAT -lm -I./include -L./lib -lportsf
+	gcc -Wall -std=gnu99 WASDAAT.c -o bin/WASDAAT -I./include -L./lib -lportsf -lm
