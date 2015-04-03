@@ -6,7 +6,7 @@
 #
 CC=gcc
 
-CFLAGS=-O2 -Wall -lm -Dunix  -I./.
+CFLAGS=-O2 -Wall -Dunix  -I./.
 
 PSFOBJS=	portsf.o ieee80.o
 
