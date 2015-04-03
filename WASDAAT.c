@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
     // Select operation
     char enteredOperation[] = "00"; // todo Should probably change this to something like the audio prog cw1 thing, where we used getchar() a lot to catch inputs that were too long.
     memset(enteredOperation, 0, 3);
+    // Will to fix
     char *leftoverChar = '\0';
     int operationToDo = 0;
 
