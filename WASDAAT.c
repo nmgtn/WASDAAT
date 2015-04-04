@@ -103,26 +103,35 @@ int main(int argc, char *argv[]) {
 	DWORD nFrames = NUM_SAMPLES_IN_FRAME;
 	int inputfd = INVALID_PORTSF_FID;
 	int outputfd[2] = {INVALID_PORTSF_FID, INVALID_PORTSF_FID};
-	PSF_PROPS audio_properties;
+	PSF_PROPS input_audio_properties;
+	PSF_PROPS output_audio_properties;
 	float *inBlock = NULL, **outBlock = NULL;
 	long num_frames_read = 0;
 
     // Open the input file
-	if((inputfd = psf_sndOpen(inputFilename, &audio_properties, DO_NOT_AUTO_RESCALE)) < 0){
+	if((inputfd = psf_sndOpen(inputFilename, &input_audio_properties, DO_NOT_AUTO_RESCALE)) < 0){
 		printf("Error: Unable to open input file. Please check %s and retry\n", inputFilename);
 		return EXIT_FAILURE;
 	}
 
-    const int num_channels = audio_properties.chans;	// Store the number of channels in the input file
-    long sampleFrequency = audio_properties.srate;	// Store sample frequency of input file (and by extension output file)
+    const int num_channels = input_audio_properties.chans;	// Store the number of channels in the input file
+    long sampleFrequency = input_audio_properties.srate;	// Store sample frequency of input file (and by extension output file)
+    // Store the input file traits in the output file traits except the number of channels
+    output_audio_properties.chans = 1;
+    output_audio_properties.chformat = input_audio_properties.chformat; // todo check this one - I don't understand it fully (not sure how to tell it that we're dealing with mono)
+	output_audio_properties.format = input_audio_properties.format;
+	output_audio_properties.samptype = input_audio_properties.samptype;
+	output_audio_properties.srate = input_audio_properties.srate;
+
+
 
     // Open the relevant number of output files
     // todo put this in a for loop so that loads of output files can be made. At the moment we're limiting outselves to stereo (it'll mess up if a seriously multichannel file is entered)
-	if((outputfd[0] = psf_sndOpen(outputFilename[0], &audio_properties, DO_NOT_AUTO_RESCALE)) < 0){
+    if((outputfd[0] = psf_sndCreate(outputFilename[0], &output_audio_properties, CLIP_FLOATS, DO_NOT_MINIMISE_HDR, PSF_CREATE_RDWR)) < 0){
 		printf("Error: Unable to open output file 0. Please check %s and retry\n", outputFilename[0]);
 		return EXIT_FAILURE;
 	}
-	if((outputfd[1] = psf_sndOpen(outputFilename[1], &audio_properties, DO_NOT_AUTO_RESCALE)) < 0){
+    if((outputfd[1] = psf_sndCreate(outputFilename[1], &output_audio_properties, CLIP_FLOATS, DO_NOT_MINIMISE_HDR, PSF_CREATE_RDWR)) < 0){
 		printf("Error: Unable to open output file 1. Please check %s and retry\n", outputFilename[1]);
 		return EXIT_FAILURE;
 	}
@@ -186,7 +195,6 @@ int main(int argc, char *argv[]) {
 				if((psf_sndWriteFloatFrames(outputfd[monoOutChannel], outBlock[monoOutChannel], num_frames_read))!=num_frames_read){
 					printf("Error: Couldn't write to output file.\n");
 					printf("Please check the input file \"%s\" and delete the incomplete output file \"%s\" then retry\n", inputFilename, outputFilename[monoOutChannel]);
-
 					return EXIT_FAILURE;
 				}
 	    	}
@@ -195,7 +203,6 @@ int main(int argc, char *argv[]) {
 	    if(num_frames_read < 0){
 	    	printf("Error: Couldn't read the input file.\n ");
 			printf("Please check the input file \"%s\" then retry\n", inputFilename);
-
 			return EXIT_FAILURE;
 	    }
 
