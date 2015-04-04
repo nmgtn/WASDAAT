@@ -235,8 +235,6 @@ int main(int argc, char *argv[]) {
 			if(inputfd >= 0){
 				psf_sndClose(inputfd);
 			}
-			//Close the portsf library
-			psf_finish();
     	}
     	break;
     	case 2:
@@ -247,6 +245,10 @@ int main(int argc, char *argv[]) {
     }
 
     printf("The files have been processed. Thank you for using WASDAAT\n");
+
+
+    //Close the portsf library
+	psf_finish();
     return EXIT_SUCCESS;
 
 }
