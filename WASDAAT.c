@@ -185,8 +185,8 @@ int main(int argc, char *argv[]) {
 	    		// Finally we split the file down even further to the samples contained by each frame (one sample for each channel)
 	    		for(int channelIndex = 0; channelIndex<num_channels;channelIndex++){
 					// This line stores the correct channel of the input block in the element of the array that corresponds to the relevant mono output file
-					outBlock[channelIndex][sampleNum] = inBlock[sampleNum+channelIndex];
-	    		}
+					outBlock[channelIndex][sampleNum/2] = inBlock[sampleNum+channelIndex];	// todo change this 2 to the number of channels
+				}
 			}
 
 	    	// todo change this for loop so it deals with moar channels (specifically the number of channels of the input file we're looking at)
