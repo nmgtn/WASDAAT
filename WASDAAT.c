@@ -29,6 +29,13 @@ int splitStereoToMono();
 /*===== main =================================================================*/
 int main(int argc, char *argv[]) {
 
+	// Testing - this variable should be replaced later
+    char outputFilename[2][101];
+    memset(outputFilename[0], 0, 101);
+    memset(outputFilename[1], 0, 101);
+    strcpy(outputFilename[0], "testOutL.wav");
+    strcpy(outputFilename[1], "testOutR.wav");
+
     /*----- Get required arguments --------------------------------*/
 
 
@@ -69,19 +76,18 @@ int main(int argc, char *argv[]) {
     printf("Please specify the input file:\n");
     scanf("%s", inputFilename);
 
-    // Initialise portsf library
-	if(psf_init()){
-		printf("Error: Unable to start portfsf library\n");
-		return EXIT_FAILURE;
-	}
-
-
     // Check that file exists
     if(access(inputFilename, F_OK) != 0){
         printf("Error: could not find the input file.\n"
         		"Please check the input filename and re-run the program.\n");
         return EXIT_FAILURE;
     }
+
+    // Initialise portsf library
+	if(psf_init()){
+		printf("Error: Unable to start portfsf library\n");
+		return EXIT_FAILURE;
+	}
 
     // Check file format
     psf_format inputFileType = psf_getFormatExt(inputFilename);
@@ -95,7 +101,8 @@ int main(int argc, char *argv[]) {
 
     // Declare and initialise variables for the audio processing
 	DWORD nFrames = NUM_SAMPLES_IN_FRAME;
-	int inputfd = INVALID_PORTSF_FID, outputfd = INVALID_PORTSF_FID;
+	int inputfd = INVALID_PORTSF_FID;
+	int outputfd[2] = {INVALID_PORTSF_FID, INVALID_PORTSF_FID};
 	PSF_PROPS audio_properties;
 	float *inBlock = NULL, **outBlock = NULL;
 	long num_frames_read = 0;
@@ -107,8 +114,23 @@ int main(int argc, char *argv[]) {
 	}
 
     const int num_channels = audio_properties.chans;	// Store the number of channels in the input file
+    long sampleFrequency = audio_properties.srate;	// Store sample frequency of input file (and by extension output file)
+
+    // Open the relevant number of output files
+    // todo put this in a for loop so that loads of output files can be made. At the moment we're limiting outselves to stereo (it'll mess up if a seriously multichannel file is entered)
+	if((outputfd[0] = psf_sndOpen(outputFilename[0], &audio_properties, DO_NOT_AUTO_RESCALE)) < 0){
+		printf("Error: Unable to open output file 0. Please check %s and retry\n", outputFilename[0]);
+		return EXIT_FAILURE;
+	}
+	if((outputfd[1] = psf_sndOpen(outputFilename[1], &audio_properties, DO_NOT_AUTO_RESCALE)) < 0){
+		printf("Error: Unable to open output file 1. Please check %s and retry\n", outputFilename[1]);
+		return EXIT_FAILURE;
+	}
+
+
 
     /*----- Allocate memory for in and out blocks --------------------------------*/
+
     // Allocate memory for input block. Using calloc so that the memory is initialized to NULL
 	if((inBlock = (float*) calloc(nFrames * num_channels, sizeof(float))) == NULL){
 		printf("Error: Could not allocate memory for inBlock. Please try running again. If error persists please contact the programmer\n");
@@ -133,6 +155,50 @@ int main(int argc, char *argv[]) {
 	 * to the row array, outBlock[i][j] indexes an element
 	 */
 
+	// Check that sample frequency is greater than 0 (very unlikely to happen, probably impossible but it doesn't hurt to
+	// check as if it was 0 there could be divide by 0 errors.
+	if(sampleFrequency <= 0){
+		printf("Error: The sample frequency of your file is 0. Either the program has gone "
+				"wrong or you've done something super sneaky to try and break it. \n"
+				"Either way, please try again with a file that definitely has a sample "
+				"frequency of more than 0.\n");
+		return EXIT_FAILURE;
+	}
+
+
+
+	/*------There now follows a few loops (while and for) which split the audio file into smaller chunks until we have individual samples------*/
+	    printf("\nFiles are being processed. Please wait . . .\n\n");
+	    // Read frames from input file a block at a time
+	    while((num_frames_read=psf_sndReadFloatFrames(inputfd, inBlock, nFrames)) > 0){
+	    	// Now read through each frame within the block individually - note that it is now referred to in samples else it gets confusing to follow
+	    	for(int sampleNum=0; sampleNum<(num_frames_read*num_channels); sampleNum+=num_channels){ //
+	    		// Finally we split the file down even further to the samples contained by each frame (one sample for each channel)
+	    		for(int channelIndex = 0; channelIndex<num_channels;channelIndex++){
+					// This line stores the correct channel of the input block in the element of the array that corresponds to the relevant mono output file
+					outBlock[channelIndex][sampleNum] = inBlock[sampleNum+channelIndex];
+	    		}
+			}
+
+	    	// todo change this for loop so it deals with moar channels (specifically the number of channels of the input file we're looking at)
+	    	for(int monoOutChannel = 0; monoOutChannel < 2; monoOutChannel++){
+				// Write the filtered output block to the output file
+				if((psf_sndWriteFloatFrames(outputfd[monoOutChannel], outBlock[monoOutChannel], num_frames_read))!=num_frames_read){
+					printf("Error: Couldn't write to output file.\n");
+					printf("Please check the input file \"%s\" and delete the incomplete output file \"%s\" then retry\n", inputFilename, outputFilename[monoOutChannel]);
+
+					return EXIT_FAILURE;
+				}
+	    	}
+	    }
+	    // Display error if input file couldn't be read
+	    if(num_frames_read < 0){
+	    	printf("Error: Couldn't read the input file.\n ");
+			printf("Please check the input file \"%s\" then retry\n", inputFilename);
+
+			return EXIT_FAILURE;
+	    }
+
 
 
 
@@ -146,9 +212,12 @@ int main(int argc, char *argv[]) {
 	if(outBlock){
 		free(outBlock);
 	}
-	// Close the output file
-	if(outputfd >= 0){
-		psf_sndClose(outputfd);
+	// Close the output files
+	if(outputfd[0] >= 0){
+		psf_sndClose(outputfd[0]);
+	}
+	if(outputfd[1] >= 0){
+		psf_sndClose(outputfd[1]);
 	}
 	// Close the input file
 	if(inputfd >= 0){
