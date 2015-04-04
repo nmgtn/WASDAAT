@@ -126,16 +126,12 @@ int main(int argc, char *argv[]) {
 
 
     // Open the relevant number of output files
-    // todo put this in a for loop so that loads of output files can be made. At the moment we're limiting outselves to stereo (it'll mess up if a seriously multichannel file is entered)
-    if((outputfd[0] = psf_sndCreate(outputFilename[0], &output_audio_properties, CLIP_FLOATS, DO_NOT_MINIMISE_HDR, PSF_CREATE_RDWR)) < 0){
-		printf("Error: Unable to open output file 0. Please check %s and retry\n", outputFilename[0]);
-		return EXIT_FAILURE;
-	}
-    if((outputfd[1] = psf_sndCreate(outputFilename[1], &output_audio_properties, CLIP_FLOATS, DO_NOT_MINIMISE_HDR, PSF_CREATE_RDWR)) < 0){
-		printf("Error: Unable to open output file 1. Please check %s and retry\n", outputFilename[1]);
-		return EXIT_FAILURE;
-	}
-
+    for(int outputFileNumber = 0; outputFileNumber < num_channels; outputFileNumber++){
+    	if((outputfd[outputFileNumber] = psf_sndCreate(outputFilename[outputFileNumber], &output_audio_properties, CLIP_FLOATS, DO_NOT_MINIMISE_HDR, PSF_CREATE_RDWR)) < 0){
+			printf("Error: Unable to open output file %d. Please check %s and retry\n", outputFileNumber, outputFilename[outputFileNumber]);
+			return EXIT_FAILURE;
+		}
+    }
 
 
     /*----- Allocate memory for in and out blocks --------------------------------*/
@@ -181,11 +177,11 @@ int main(int argc, char *argv[]) {
 	    // Read frames from input file a block at a time
 	    while((num_frames_read=psf_sndReadFloatFrames(inputfd, inBlock, nFrames)) > 0){
 	    	// Now read through each frame within the block individually - note that it is now referred to in samples else it gets confusing to follow
-	    	for(int sampleNum=0; sampleNum<(num_frames_read*num_channels); sampleNum+=num_channels){ //
+	    	for(int input_sampleNum=0, output_sampleNum = 0; input_sampleNum<(num_frames_read*num_channels); input_sampleNum+=num_channels, output_sampleNum++){ //
 	    		// Finally we split the file down even further to the samples contained by each frame (one sample for each channel)
 	    		for(int channelIndex = 0; channelIndex<num_channels;channelIndex++){
 					// This line stores the correct channel of the input block in the element of the array that corresponds to the relevant mono output file
-					outBlock[channelIndex][sampleNum/2] = inBlock[sampleNum+channelIndex];	// todo change this 2 to the number of channels
+					outBlock[channelIndex][output_sampleNum] = inBlock[input_sampleNum+channelIndex];
 				}
 			}
 
