@@ -29,13 +29,6 @@ int splitStereoToMono();
 /*===== main =================================================================*/
 int main(int argc, char *argv[]) {
 
-	// Testing - this variable should be replaced later
-    char outputFilename[2][101];
-    memset(outputFilename[0], 0, 101);
-    memset(outputFilename[1], 0, 101);
-    strcpy(outputFilename[0], "testOutL.wav");
-    strcpy(outputFilename[1], "testOutR.wav");
-
     /*----- Get required arguments --------------------------------*/
 
 
@@ -55,7 +48,7 @@ int main(int argc, char *argv[]) {
     int operationToDo = 0;
 
     printf("Please select an operation:\n"
-    "\t1: Split stereo file to two mono files\n" // Change this to "Split multichannel file to mono files" when we've check we can do it with stereo
+    "\t1: Split stereo file to two mono files\n" // todo Change this to "Split multichannel file to mono files" when we've check we can do it with stereo
     "\t2: Convert file type\n");
 
     scanf("%s", enteredOperation);
@@ -83,7 +76,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    // Initialise portsf library
+	// Initialise portsf library
 	if(psf_init()){
 		printf("Error: Unable to start portfsf library\n");
 		return EXIT_FAILURE;
@@ -122,6 +115,21 @@ int main(int argc, char *argv[]) {
 	output_audio_properties.format = input_audio_properties.format;
 	output_audio_properties.samptype = input_audio_properties.samptype;
 	output_audio_properties.srate = input_audio_properties.srate;
+
+	// todo This needs to be replaced with some proper output file naming facility
+	char outputFilename[num_channels][101];
+	for(int i = 0; i < num_channels; i++){
+		memset(outputFilename[i], 0, 101);
+		char temp[10];
+		memset(temp, 0, 10);
+		sprintf(temp, "%d", i);
+		strcpy(outputFilename[i], "outputChannel");
+		printf("OFN = %s\n", outputFilename[i]);
+		strcat(outputFilename[i], temp);
+		printf("OFN = %s\n", outputFilename[i]);
+		strcat(outputFilename[i], ".wav");
+		printf("Output file name %d = %s\n", i, outputFilename[1]);
+	}
 
 
 
@@ -185,8 +193,7 @@ int main(int argc, char *argv[]) {
 				}
 			}
 
-	    	// todo change this for loop so it deals with moar channels (specifically the number of channels of the input file we're looking at)
-	    	for(int monoOutChannel = 0; monoOutChannel < 2; monoOutChannel++){
+	    	for(int monoOutChannel = 0; monoOutChannel < num_channels; monoOutChannel++){
 				// Write the filtered output block to the output file
 				if((psf_sndWriteFloatFrames(outputfd[monoOutChannel], outBlock[monoOutChannel], num_frames_read))!=num_frames_read){
 					printf("Error: Couldn't write to output file.\n");
