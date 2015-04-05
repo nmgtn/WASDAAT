@@ -25,6 +25,7 @@ enum auto_rescale { DO_NOT_AUTO_RESCALE, AUTO_RESCALE };
 /*===== List of functions =================================================================*/
 
 int multiToMonos();
+int getAndCheckInputFile(char *inputFilename, int fileNameLength, psf_format *inputFileType);
 
 /*===== main =================================================================*/
 int main(int argc, char *argv[]) {
@@ -61,36 +62,17 @@ int main(int argc, char *argv[]) {
         printf("You selected operation %d.\n", operationToDo);
     }
 
-
-    // Ask user for an input file
-    char inputFilename[101]; //todo optimise this!
-    memset(inputFilename, 0, 101);
-
-    printf("Please specify the input file:\n");
-    scanf("%s", inputFilename);
-
-    // Check that file exists
-    if(access(inputFilename, F_OK) != 0){
-        printf("Error: could not find the input file.\n"
-        		"Please check the input filename and re-run the program.\n");
-        return EXIT_FAILURE;
-    }
-
 	// Initialise portsf library
 	if(psf_init()){
 		printf("Error: Unable to start portfsf library\n");
 		return EXIT_FAILURE;
 	}
 
-    // Check file format
-    psf_format inputFileType = psf_getFormatExt(inputFilename);
-    if(inputFileType == PSF_FMT_UNKNOWN) {
-        printf("Error: failed to determine the input file type.\n"
-        		"Supported formats are .wav, .aif, .aiff, .aifc, .afc, .amb\n");
-        return EXIT_FAILURE;
-    } else {
-        printf("File valid.\n");
-    }
+	char inputFilename[101]; //todo optimise this!
+	psf_format inputFileType;
+	if(getAndCheckInputFile(inputFilename, 101, &inputFileType) == EXIT_FAILURE){
+		return EXIT_FAILURE;
+	}
 
     // Do some stuff depending on what option has been chosen by the user
     switch(operationToDo){
@@ -263,7 +245,6 @@ int monosToMulti(char *inputFilename){
 	// Declare and initialise variables for the audio processing
 	DWORD nFrames = NUM_SAMPLES_IN_FRAME;
 	int inputfd = INVALID_PORTSF_FID;
-	int outputfd[2] = {INVALID_PORTSF_FID, INVALID_PORTSF_FID};
 	PSF_PROPS input_audio_properties;
 	PSF_PROPS output_audio_properties;
 	float *inBlock = NULL, **outBlock = NULL;
@@ -283,6 +264,12 @@ int monosToMulti(char *inputFilename){
 	output_audio_properties.format = input_audio_properties.format;
 	output_audio_properties.samptype = input_audio_properties.samptype;
 	output_audio_properties.srate = input_audio_properties.srate;
+
+	// Make outputfds
+	int outputfd[num_channels];
+	for (int i = 0; i < num_channels; i++){
+		outputfd[i] = INVALID_PORTSF_FID;
+	}
 
 	// todo This needs to be replaced with some proper output file naming facility
 	char outputFilename[num_channels][101];
@@ -345,27 +332,27 @@ int monosToMulti(char *inputFilename){
 
 
 	/*------There now follows a few loops (while and for) which split the audio file into smaller chunks until we have individual samples------*/
-		printf("\nFiles are being processed. Please wait . . .\n\n");
-		// Read frames from input file a block at a time
-		while((num_frames_read=psf_sndReadFloatFrames(inputfd, inBlock, nFrames)) > 0){
-			// Now read through each frame within the block individually - note that it is now referred to in samples else it gets confusing to follow
-			for(int input_sampleNum=0, output_sampleNum = 0; input_sampleNum<(num_frames_read*num_channels); input_sampleNum+=num_channels, output_sampleNum++){ //
-				// Finally we split the file down even further to the samples contained by each frame (one sample for each channel)
-				for(int channelIndex = 0; channelIndex<num_channels;channelIndex++){
-					// This line stores the correct channel of the input block in the element of the array that corresponds to the relevant mono output file
-					outBlock[channelIndex][output_sampleNum] = inBlock[input_sampleNum+channelIndex];
-				}
-			}
-
-			for(int monoOutChannel = 0; monoOutChannel < num_channels; monoOutChannel++){
-				// Write the filtered output block to the output file
-				if((psf_sndWriteFloatFrames(outputfd[monoOutChannel], outBlock[monoOutChannel], num_frames_read))!=num_frames_read){
-					printf("Error: Couldn't write to output file.\n");
-					printf("Please check the input file \"%s\" and delete the incomplete output file \"%s\" then retry\n", inputFilename, outputFilename[monoOutChannel]);
-					return EXIT_FAILURE;
-				}
+	printf("\nFiles are being processed. Please wait . . .\n\n");
+	// Read frames from input file a block at a time
+	while((num_frames_read=psf_sndReadFloatFrames(inputfd, inBlock, nFrames)) > 0){
+		// Now read through each frame within the block individually - note that it is now referred to in samples else it gets confusing to follow
+		for(int input_sampleNum=0, output_sampleNum = 0; input_sampleNum<(num_frames_read*num_channels); input_sampleNum+=num_channels, output_sampleNum++){ //
+			// Finally we split the file down even further to the samples contained by each frame (one sample for each channel)
+			for(int channelIndex = 0; channelIndex<num_channels;channelIndex++){
+				// This line stores the correct channel of the input block in the element of the array that corresponds to the relevant mono output file
+				outBlock[channelIndex][output_sampleNum] = inBlock[input_sampleNum+channelIndex];
 			}
 		}
+
+		for(int monoOutChannel = 0; monoOutChannel < num_channels; monoOutChannel++){
+			// Write the filtered output block to the output file
+			if((psf_sndWriteFloatFrames(outputfd[monoOutChannel], outBlock[monoOutChannel], num_frames_read))!=num_frames_read){
+				printf("Error: Couldn't write to output file.\n");
+				printf("Please check the input file \"%s\" and delete the incomplete output file \"%s\" then retry\n", inputFilename, outputFilename[monoOutChannel]);
+				return EXIT_FAILURE;
+			}
+		}
+	}
 	// Display error if input file couldn't be read
 	if(num_frames_read < 0){
 		printf("Error: Couldn't read the input file.\n ");
@@ -383,15 +370,40 @@ int monosToMulti(char *inputFilename){
 		free(outBlock);
 	}
 	// Close the output files
-	if(outputfd[0] >= 0){
-		psf_sndClose(outputfd[0]);
-	}
-	if(outputfd[1] >= 0){
-		psf_sndClose(outputfd[1]);
+	for(int i=0; i< num_channels; i++){
+		if(outputfd[i] >= 0){
+			psf_sndClose(outputfd[0]);
+		}
 	}
 	// Close the input file
 	if(inputfd >= 0){
 		psf_sndClose(inputfd);
 	}
+	return EXIT_SUCCESS;
+}
+
+int getAndCheckInputFile(char *inputFilename, int fileNameLength, psf_format *inputFileType){
+	// Ask user for an input file
+	memset(inputFilename, 0, fileNameLength);
+	printf("Please specify the input file:\n");
+	scanf("%s", inputFilename);
+
+	// Check that file exists
+	if(access(inputFilename, F_OK) != 0){
+		printf("Error: could not find the input file.\n"
+				"Please check the input filename and re-run the program.\n");
+		return EXIT_FAILURE;
+	}
+
+	// Check file format
+	*inputFileType = psf_getFormatExt(inputFilename);
+	if(*inputFileType == PSF_FMT_UNKNOWN) {
+		printf("Error: failed to determine the input file type.\n"
+				"Supported formats are .wav, .aif, .aiff, .aifc, .afc, .amb\n");
+		return EXIT_FAILURE;
+	} else {
+		printf("File valid.\n");
+	}
+
 	return EXIT_SUCCESS;
 }
