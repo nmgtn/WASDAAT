@@ -25,6 +25,7 @@ enum auto_rescale { DO_NOT_AUTO_RESCALE, AUTO_RESCALE };
 /*===== List of functions =================================================================*/
 
 int multiToMonos();
+int monosToMulti();
 int getAndCheckInputFile(char *inputFilename, int fileNameLength, psf_format *inputFileType);
 
 /*===== main =================================================================*/
@@ -50,7 +51,8 @@ int main(int argc, char *argv[]) {
 
     printf("Please select an operation:\n"
     "\t1: Split stereo file to two mono files\n" // todo Change this to "Split multichannel file to mono files" when we've check we can do it with stereo
-    "\t2: Convert file type\n");
+    "\t2: Combine multiple mono files into a multichannel file\n"
+    "\t3: Convert file type\n");
 
     scanf("%s", enteredOperation);
     operationToDo = strtol(enteredOperation, &leftoverChar, 10);
@@ -68,24 +70,24 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	char inputFilename[101]; //todo optimise this!
-	psf_format inputFileType;
-	if(getAndCheckInputFile(inputFilename, 101, &inputFileType) == EXIT_FAILURE){
-		return EXIT_FAILURE;
-	}
-
     // Do some stuff depending on what option has been chosen by the user
     switch(operationToDo){
     case 1:{
-    	if(multiToMonos(inputFilename) != EXIT_SUCCESS){
+    	if(multiToMonos() != EXIT_SUCCESS){
     		return EXIT_FAILURE;
     	}
     }
     	break;
-    	case 2:
+    	case 2:{
     		printf("We haven't actually coded this functionality yet, please come back later\n");
     		return EXIT_FAILURE;
+    	}
+		break;
 
+    	case 3:{
+			printf("We haven't actually coded this functionality yet, please come back later\n");
+			return EXIT_FAILURE;
+    	}
 		break;
     }
 
@@ -98,9 +100,16 @@ int main(int argc, char *argv[]) {
 
 }
 
-int multiToMonos(char *inputFilename){
+int multiToMonos(){
 
 	/*----- Split multichannel file into many mono files --------------------------------*/
+
+	// Ask the user for an input file
+	char inputFilename[101]; //todo optimise this!
+	psf_format inputFileType;
+	if(getAndCheckInputFile(inputFilename, 101, &inputFileType) == EXIT_FAILURE){
+		return EXIT_FAILURE;
+	}
 
 	// Declare and initialise variables for the audio processing
 	DWORD nFrames = NUM_SAMPLES_IN_FRAME;
@@ -238,9 +247,16 @@ int multiToMonos(char *inputFilename){
 	return EXIT_SUCCESS;
 }
 
-int monosToMulti(char *inputFilename){
+int monosToMulti(){
 
-	/*----- Split multichannel file into many mono files --------------------------------*/
+	/*----- Combine many mono files to a multichannel file --------------------------------*/
+
+	// Ask the user for an input file
+	char inputFilename[101]; //todo optimise this!
+	psf_format inputFileType;
+	if(getAndCheckInputFile(inputFilename, 101, &inputFileType) == EXIT_FAILURE){
+		return EXIT_FAILURE;
+	}
 
 	// Declare and initialise variables for the audio processing
 	DWORD nFrames = NUM_SAMPLES_IN_FRAME;
