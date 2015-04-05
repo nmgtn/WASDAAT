@@ -150,7 +150,7 @@ int multiToMonos(char *inputFilename){
 		memset(outputFilename[i], 0, 101);
 		char temp[10];
 		memset(temp, 0, 10);
-		sprintf(temp, "%d", i);
+		sprintf(temp, "%d", i+1);
 		strcpy(outputFilename[i], "outputChannel");
 		strcat(outputFilename[i], temp);
 		strcat(outputFilename[i], ".wav");
