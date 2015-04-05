@@ -248,11 +248,10 @@ int multiToMonos(char *inputFilename){
 			free(outBlock);
 		}
 		// Close the output files
-		if(outputfd[0] >= 0){
-			psf_sndClose(outputfd[0]);
-		}
-		if(outputfd[1] >= 0){
-			psf_sndClose(outputfd[1]);
+		for(int i=0; i< num_channels; i++){
+			if(outputfd[i] >= 0){
+				psf_sndClose(outputfd[0]);
+			}
 		}
 		// Close the input file
 		if(inputfd >= 0){
