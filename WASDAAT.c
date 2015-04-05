@@ -123,7 +123,6 @@ int multiToMonos(char *inputFilename){
 	// Declare and initialise variables for the audio processing
 	DWORD nFrames = NUM_SAMPLES_IN_FRAME;
 	int inputfd = INVALID_PORTSF_FID;
-	int outputfd[2] = {INVALID_PORTSF_FID, INVALID_PORTSF_FID};
 	PSF_PROPS input_audio_properties;
 	PSF_PROPS output_audio_properties;
 	float *inBlock = NULL, **outBlock = NULL;
@@ -143,6 +142,12 @@ int multiToMonos(char *inputFilename){
 	output_audio_properties.format = input_audio_properties.format;
 	output_audio_properties.samptype = input_audio_properties.samptype;
 	output_audio_properties.srate = input_audio_properties.srate;
+
+	// Make outputfds
+	int outputfd[num_channels];
+	for (int i = 0; i < num_channels; i++){
+		outputfd[i] = INVALID_PORTSF_FID;
+	}
 
 	// todo This needs to be replaced with some proper output file naming facility
 	char outputFilename[num_channels][101];
