@@ -94,20 +94,22 @@ int main(int argc, char *argv[]) {
 
     // Do some stuff depending on what option has been chosen by the user
     switch(operationToDo) { //todo We should use enums here instead of magic numbers
-    case 1:
+    case 1:{
     	if(multiToMonos(inputFilename) != EXIT_SUCCESS){
     		return EXIT_FAILURE;
     	}
-    	break;
-	case 2:
+    }break;
+
+	case 2:{
 		printf("We haven't actually coded this functionality yet, please come back later\n");
 		return EXIT_FAILURE;
-		break;
-    default:
+	}break;
+
+    default:{
         printf("Error: no action assigned to that operation yet. This is "
                 "probably a coding error - contact the developer.\n");
+    	}
     }
-
     // Once case has executed...
     printf("The files have been processed. Thank you for using WASDAAT\n");
 
