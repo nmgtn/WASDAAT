@@ -95,9 +95,13 @@ int main(int argc, char *argv[]) {
     // Do some stuff depending on what option has been chosen by the user
     switch(operationToDo) { //todo We should use enums here instead of magic numbers
     case 1:{
-    	if(multiToMonos(inputFilename) != EXIT_SUCCESS){
-    		return EXIT_FAILURE;
-    	}
+        int r_multiToMonos = EXIT_FAILURE;
+        // Do the processing
+        r_multiToMonos = multiToMonos(inputFilename);
+        // Catch error
+        if(r_multiToMonos != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
     }break;
 
 	case 2:{
